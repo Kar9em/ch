@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دوري أبطال المدرسة - UEFA Champions League</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <img src="lo.jpeg" alt="Modern Agyal El Ghad Language School" class="login-school-logo">
+            <h2 data-i18n="loginTitle">تسجيل الدخول للنظام</h2>
+            <p class="login-sub" data-i18n="loginSubtitle">أدخل اسم المستخدم وكلمة المرور للمتابعة</p>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label data-i18n="usernameLabel">اسم المستخدم (Username)</label>
+                    <input type="text" id="loginUsername" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="passwordLabel">كلمة المرور (Password)</label>
+                    <input type="password" id="loginPassword" required autocomplete="current-password">
+                </div>
+                <div id="loginError" class="login-error hidden"></div>
+                <button type="submit" class="btn btn-primary login-submit-btn" data-i18n="loginBtn">دخول</button>
+            </form>
+            <button type="button" class="btn guest-login-btn" onclick="loginAsGuest()">guest</button>
+            <button type="button" class="lang-btn login-lang-btn" onclick="toggleLanguage()" id="loginLangBtn">English</button>
+        </div>
+    </div>
+
+    <div id="accessModal" class="modal hidden" onclick="closeAccessModal()">
+        <div class="modal-content access-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 data-i18n="accessModalTitle">طلب صلاحية التعديل (acsses)</h3>
+                <button type="button" class="close-btn" onclick="closeAccessModal()">&times;</button>
+            </div>
+            <p class="access-desc" data-i18n="accessModalDesc">تم إرسال رسالة برمز التحقق إلى الإيميلات المخصصة. أدخل الرمز لفتح التعديل على كل شيء:</p>
+            <div class="access-actions-row">
+                <button type="button" class="btn btn-roll" onclick="resendAccessEmail()" data-i18n="sendCodeEmailBtn">إعادة إرسال الرمز للإيميل</button>
+            </div>
+            <form id="accessCodeForm" class="access-form">
+                <input type="text" id="accessCodeInput" maxlength="6" data-i18n-placeholder="accessCodePlaceholder" placeholder="أدخل الرمز هنا..." required>
+                <div id="accessError" class="login-error hidden"></div>
+                <button type="submit" class="btn btn-success" data-i18n="verifyCodeBtn">تفعيل التعديل</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="welcomeOverlay" class="celebration-overlay hidden" onclick="closeWelcomeCelebration()">
+        <div id="welcomeConfetti" class="confetti-container"></div>
+        <div class="celebration-card" onclick="event.stopPropagation()">
+            <div class="celebration-icon">⭐</div>
+            <h2 id="welcomeTitle" class="winner-title"></h2>
+            <p class="welcome-sub" data-i18n="welcomeSubtext">تم تسجيل الدخول بنجاح إلى دوري أبطال المدرسة</p>
+            <button class="btn btn-primary celebration-close-btn" onclick="closeWelcomeCelebration()" data-i18n="startNowBtn">ابدأ الآن</button>
+        </div>
+    </div>
+
+    <div id="appWrapper" class="hidden">
+        <header class="app-header">
+            <div class="header-right-group">
+                <div id="userBadge" class="user-badge">
+                    <span>👤</span>
+                    <strong id="loggedUserDisplay"></strong>
+                    <button type="button" id="guestAccessBtn" class="access-btn hidden" onclick="requestGuestAccess()">acsses</button>
+                    <button type="button" class="logout-btn" onclick="logoutUser()" data-i18n="logoutBtn">خروج</button>
+                </div>
+                <div class="logo-container">
+                    <img src="lo.jpeg" alt="School Logo" class="header-school-logo">
+                    <div>
+                        <h1 data-i18n="appTitle">دوري أبطال المدرسة ⭐</h1>
+                        <span data-i18n="appSubtitle">نظام التشامبيونز ليج الرسمي (من دور الـ 32 وحتى النهائي)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="filters-wrapper">
+                <div class="filter-bar">
+                    <label for="stageFilter" data-i18n="stageLabel">المرحلة:</label>
+                    <select id="stageFilter" onchange="renderAll()">
+                        <option value="الكل" data-i18n="allStages">جميع المراحل</option>
+                        <option value="ابتدائي" data-i18n="primary">ابتدائي</option>
+                        <option value="إعدادي" data-i18n="preparatory">إعدادي</option>
+                        <option value="ثانوي" data-i18n="secondary">ثانوي</option>
+                    </select>
+                </div>
+                <div class="filter-bar">
+                    <label for="categoryFilter" data-i18n="categoryLabel">القسم:</label>
+                    <select id="categoryFilter" onchange="renderAll()">
+                        <option value="الكل" data-i18n="allCategories">جميع الأقسام</option>
+                        <option value="لغات" data-i18n="languages">لغات</option>
+                        <option value="عربي" data-i18n="arabic">عربي</option>
+                    </select>
+                </div>
+                <div class="filter-bar">
+                    <label for="roundFilter" data-i18n="roundFilterLabel">الدور:</label>
+                    <select id="roundFilter" onchange="renderAll()">
+                        <option value="الكل" data-i18n="allRounds">جميع الأدوار</option>
+                        <option value="مرحلة الدوري" data-i18n="leaguePhase">مرحلة الدوري</option>
+                        <option value="دور الـ 32" data-i18n="round32">دور الـ 32 (Round of 32)</option>
+                        <option value="دور الـ 16" data-i18n="round16">دور الـ 16 (Round of 16)</option>
+                        <option value="ربع النهائي" data-i18n="quarterFinal">ربع النهائي (Quarter-Finals)</option>
+                        <option value="نصف النهائي" data-i18n="semiFinal">نصف النهائي (Semi-Finals)</option>
+                        <option value="النهائي" data-i18n="finalRound">النهائي (Final) 🏆</option>
+                        <option value="ودي" data-i18n="friendlyMatches">مباريات ودية</option>
+                    </select>
+                </div>
+                <button id="langToggleBtn" class="lang-btn" onclick="toggleLanguage()">English</button>
+            </div>
+        </header>
+
+        <main class="container">
+            <section class="card add-school-section admin-only">
+                <h2 data-i18n="addTeamTitle">إضافة فريق / فصل مشارك في دوري الأبطال (32 فريقاً)</h2>
+                <form id="teamForm" class="grid-form">
+                    <div class="form-group">
+                        <label data-i18n="teamNameLabel">اسم الفريق / الفصل</label>
+                        <input type="text" id="teamName" data-i18n-placeholder="teamNamePlaceholder" placeholder="مثال: 5/A أو ريال مدريد..." required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="teamStageLabel">المرحلة الدراسية</label>
+                        <select id="teamStage">
+                            <option value="ابتدائي" data-i18n="primary">ابتدائي</option>
+                            <option value="إعدادي" data-i18n="preparatory">إعدادي</option>
+                            <option value="ثانوي" data-i18n="secondary">ثانوي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="teamCategoryLabel">القسم</label>
+                        <select id="teamCategory">
+                            <option value="لغات" data-i18n="languages">لغات</option>
+                            <option value="عربي" data-i18n="arabic">عربي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="teamStatusLabel">حالة الفريق في البطولة</label>
+                        <select id="teamStatus">
+                            <option value="دور الـ 32" data-i18n="inRound32">في دور الـ 32</option>
+                            <option value="دور الـ 16" data-i18n="inRound16">متأهل لدور الـ 16</option>
+                            <option value="ربع النهائي" data-i18n="inQuarter">متأهل لربع النهائي</option>
+                            <option value="نصف النهائي" data-i18n="inSemi">متأهل لنصف النهائي</option>
+                            <option value="النهائي" data-i18n="inFinal">طرف النهائي</option>
+                            <option value="بطل الأبطال" data-i18n="championStatus">بطل دوري الأبطال 🏆</option>
+                            <option value="خرج من البطولة" data-i18n="eliminatedStatus">خرج من البطولة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="teamLogoLabel">شعار الفريق (اللوجو)</label>
+                        <div class="logo-upload-box">
+                            <input type="file" id="teamLogo" accept="image/*" onchange="previewLogo(event)">
+                            <img id="logoPreview" src="" alt="" class="hidden">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-i18n="registerTeamBtn">تسجيل الفريق</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2 data-i18n="teamsSectionTitle">الفرق المشاركة في دوري الأبطال (اضغط على الفريق لعرض أو إدارة اللاعبين والأهداف والأسيستات)</h2>
+                <div id="teamsGrid" class="schools-grid"></div>
+            </section>
+
+            <section class="card ucl-bracket-section">
+                <div class="ucl-bracket-header">
+                    <h2 data-i18n="bracketTitle">شجرة دوري الأبطال الرسمية (UEFA Champions League Bracket: R32 → Final)</h2>
+                    <span class="ucl-star-badge">⭐ ROAD TO THE FINAL ⭐</span>
+                </div>
+                <div id="uclBracketContainer" class="ucl-bracket-scroll"></div>
+            </section>
+
+            <section class="card">
+                <h2 data-i18n="scheduleSectionTitle">جدول مباريات دوري الأبطال والمواعيد</h2>
+                <form id="scheduleForm" class="schedule-form admin-only">
+                    <div class="form-group">
+                        <label data-i18n="firstTeamLabel">الفريق الأول (Home)</label>
+                        <select id="schedTeamA" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="secondTeamLabel">الفريق الثاني (Away)</label>
+                        <select id="schedTeamB" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="dateLabel">التاريخ</label>
+                        <input type="date" id="schedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="timeLabel">الوقت</label>
+                        <input type="time" id="schedTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="venueLabel">الملعب / المكان</label>
+                        <input type="text" id="schedVenue" data-i18n-placeholder="venuePlaceholder" placeholder="ملعب المدرسة..." required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="cupRoundLabel">الدور</label>
+                        <select id="schedRound">
+                            <option value="دور الـ 32" data-i18n="round32">دور الـ 32 (Round of 32)</option>
+                            <option value="دور الـ 16" data-i18n="round16">دور الـ 16 (Round of 16)</option>
+                            <option value="ربع النهائي" data-i18n="quarterFinal">ربع النهائي (Quarter-Finals)</option>
+                            <option value="نصف النهائي" data-i18n="semiFinal">نصف النهائي (Semi-Finals)</option>
+                            <option value="النهائي" data-i18n="finalRound">النهائي (Final) 🏆</option>
+                            <option value="مرحلة الدوري" data-i18n="leaguePhase">مرحلة الدوري</option>
+                            <option value="ودي" data-i18n="friendlyMatch">مباراة ودية</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-i18n="addScheduleBtn">إضافة موعد مباراة</button>
+                </form>
+
+                <div class="table-responsive schedule-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="thDateTime">التاريخ والوقت</th>
+                                <th data-i18n="thMatch">المباراة</th>
+                                <th data-i18n="thStageCat">المرحلة والقسم</th>
+                                <th data-i18n="thCupRound">الدور</th>
+                                <th data-i18n="thVenue">الملعب</th>
+                                <th data-i18n="thStatusScore">الحالة / السكور</th>
+                                <th class="admin-only" data-i18n="thActions">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="two-columns">
+                <section class="card">
+                    <h2 class="admin-only" data-i18n="recordMatchTitle">تسجيل نتيجة مباراة في دوري الأبطال</h2>
+                    <form id="matchForm" class="match-form admin-only">
+                        <div class="match-inputs">
+                            <div class="team-select">
+                                <label data-i18n="firstTeamLabel">الفريق الأول</label>
+                                <select id="teamA" required></select>
+                                <input type="number" id="scoreA" min="0" value="0" required>
+                            </div>
+                            <div class="vs-badge">VS</div>
+                            <div class="team-select">
+                                <label data-i18n="secondTeamLabel">الفريق الثاني</label>
+                                <select id="teamB" required></select>
+                                <input type="number" id="scoreB" min="0" value="0" required>
+                            </div>
+                        </div>
+                        <div class="match-meta">
+                            <select id="matchRound">
+                                <option value="دور الـ 32" data-i18n="round32">دور الـ 32 (Round of 32)</option>
+                                <option value="دور الـ 16" data-i18n="round16">دور الـ 16 (Round of 16)</option>
+                                <option value="ربع النهائي" data-i18n="quarterFinal">ربع النهائي (Quarter-Finals)</option>
+                                <option value="نصف النهائي" data-i18n="semiFinal">نصف النهائي (Semi-Finals)</option>
+                                <option value="النهائي" data-i18n="finalRound">النهائي (Final) 🏆</option>
+                                <option value="مرحلة الدوري" data-i18n="leaguePhase">مرحلة الدوري (نقاط)</option>
+                                <option value="ودي" data-i18n="friendlyMatch">مباراة ودية</option>
+                            </select>
+                            <button type="submit" class="btn btn-success" data-i18n="saveResultBtn">حفظ النتيجة</button>
+                        </div>
+                    </form>
+
+                    <h3 data-i18n="finishedMatchesTitle">سجل مباريات دوري الأبطال المنتهية</h3>
+                    <div id="matchesList" class="matches-list"></div>
+                </section>
+
+                <section class="card">
+                    <h2 data-i18n="uclStandingsTitle">إحصائيات وترتيب الفرق في دوري الأبطال</h2>
+                    <div class="table-responsive">
+                        <table id="uclStandingsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th data-i18n="thTeam">الفريق / الفصل</th>
+                                    <th data-i18n="thStage">المرحلة</th>
+                                    <th data-i18n="thCategory">القسم</th>
+                                    <th data-i18n="thPlayed">لعب</th>
+                                    <th data-i18n="thWon">فاز</th>
+                                    <th data-i18n="thDrawn">تعادل</th>
+                                    <th data-i18n="thLost">خسر</th>
+                                    <th data-i18n="thGD">فارق</th>
+                                    <th data-i18n="thPoints">النقاط</th>
+                                    <th data-i18n="thUclStatus">الدور الحالي</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uclStandingsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <section class="card">
+                <h2 data-i18n="scorersTitle">قائمة هدافي دوري الأبطال وصناع الأهداف (الأسيستات)</h2>
+                <div class="table-responsive">
+                    <table id="scorersTable">
+                        <thead>
+                            <tr>
+                                <th data-i18n="thRank">الترتيب</th>
+                                <th data-i18n="thPlayerName">اسم اللاعب</th>
+                                <th data-i18n="thStage">المرحلة</th>
+                                <th data-i18n="thGrade">الصف الدراسي</th>
+                                <th data-i18n="thTeam">الفريق / الفصل</th>
+                                <th data-i18n="thCategory">القسم</th>
+                                <th data-i18n="thGoals">الأهداف ⚽</th>
+                                <th data-i18n="thAssists">الأسيستات 🎯</th>
+                                <th class="admin-only" data-i18n="thEdit">تعديل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scorersBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="playersModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-school-info">
+                    <img id="modalTeamLogo" src="" alt="">
+                    <div>
+                        <h3 id="modalTeamName"></h3>
+                        <span id="modalTeamBadge" class="badge"></span>
+                    </div>
+                </div>
+                <div class="modal-header-actions">
+                    <select id="modalTeamStatusSelect" class="admin-only" onchange="changeActiveTeamStatus(this.value)">
+                        <option value="دور الـ 32" data-i18n="inRound32">في دور الـ 32</option>
+                        <option value="دور الـ 16" data-i18n="inRound16">متأهل لدور الـ 16</option>
+                        <option value="ربع النهائي" data-i18n="inQuarter">متأهل لربع النهائي</option>
+                        <option value="نصف النهائي" data-i18n="inSemi">متأهل لنصف النهائي</option>
+                        <option value="النهائي" data-i18n="inFinal">طرف النهائي</option>
+                        <option value="بطل الأبطال" data-i18n="championStatus">بطل دوري الأبطال 🏆</option>
+                        <option value="خرج من البطولة" data-i18n="eliminatedStatus">خرج من البطولة</option>
+                    </select>
+                    <button class="btn-sm btn-del admin-only" onclick="deleteActiveTeam()" data-i18n="deleteTeamBtn">حذف الفريق</button>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+            </div>
+
+            <form id="playerForm" class="player-form admin-only">
+                <input type="text" id="playerName" data-i18n-placeholder="playerNamePlaceholder" placeholder="اسم اللاعب بالكامل" required>
+                <select id="playerStage">
+                    <option value="ابتدائي" data-i18n="primary">ابتدائي</option>
+                    <option value="إعدادي" data-i18n="preparatory">إعدادي</option>
+                    <option value="ثانوي" data-i18n="secondary">ثانوي</option>
+                </select>
+                <input type="text" id="playerGrade" data-i18n-placeholder="playerGradePlaceholder" placeholder="الصف الدراسي" required>
+                <select id="playerCategory">
+                    <option value="لغات" data-i18n="languages">لغات</option>
+                    <option value="عربي" data-i18n="arabic">عربي</option>
+                </select>
+                <input type="number" id="playerGoals" min="0" value="0" data-i18n-placeholder="goalsPlaceholder" placeholder="أهداف">
+                <input type="number" id="playerAssists" min="0" value="0" data-i18n-placeholder="assistsPlaceholder" placeholder="أسيست">
+                <button type="submit" class="btn btn-primary" data-i18n="addPlayerBtn">إضافة لاعب</button>
+            </form>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="thPlayerName">اسم اللاعب</th>
+                            <th data-i18n="thStage">المرحلة</th>
+                            <th data-i18n="thGradeShort">الصف</th>
+                            <th data-i18n="thCategory">القسم</th>
+                            <th data-i18n="thGoalsShort">الأهداف</th>
+                            <th data-i18n="thAssistsShort">الأسيستات</th>
+                            <th class="admin-only" data-i18n="thActions">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalPlayersList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="celebrationOverlay" class="celebration-overlay hidden" onclick="closeCelebration()">
+        <div id="confettiContainer" class="confetti-container"></div>
+        <div class="celebration-card" onclick="event.stopPropagation()">
+            <div id="celebrationIcon" class="celebration-icon">⭐</div>
+            <h2 id="winnerTitle" class="winner-title">تهانينا للفائز المتأهل</h2>
+            <div id="winnerSchoolBox" class="winner-school-box">
+                <img id="winnerLogo" src="" alt="">
+                <span id="winnerName"></span>
+            </div>
+            <div id="celebrationScore" class="celebration-score">0 - 0</div>
+            <div id="loserBox" class="loser-box">
+                <span id="loserText"></span>
+            </div>
+            <button class="btn btn-primary celebration-close-btn" onclick="closeCelebration()" data-i18n="closeBtn">إغلاق</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
